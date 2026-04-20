@@ -1,0 +1,71 @@
+# Foral Governance — Validação de naming conventions (Reusable Workflow)
+#
+# Pode ser chamado por QUALQUER repo via:
+#   uses: foral-project/governance/.github/workflows/validate-naming.yml@v0.1.0
+#
+# Standard: RFC 1123 (IETF) + OPA/Conftest (CNCF Graduated)
+
+name: Validate Naming
+
+on:
+  workflow_call:
+    inputs:
+      catalog-file:
+        description: "Path do catalog-info.yaml no repo"
+        type: string
+        default: "catalog-info.yaml"
+      policies-source:
+        description: "URL base das OPA policies ou 'local'"
+        type: string
+        default: "https://foral-project.github.io/governance/policies"
+      conftest-version:
+        description: "Versão do conftest"
+        type: string
+        default: "0.56.0"
+
+jobs:
+  validate-naming:
+    name: RFC 1123 Naming Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Conftest
+        run: |
+          curl -sfL "https://github.com/open-policy-agent/conftest/releases/download/v${{ inputs.conftest-version }}/conftest_${{ inputs.conftest-version }}_Linux_x86_64.tar.gz" \
+            | tar xz -C /usr/local/bin conftest
+
+      - name: Download or use local policies
+        run: |
+          if [ "${{ inputs.policies-source }}" = "local" ]; then
+            echo "Usando policies locais."
+          else
+            mkdir -p /tmp/policies
+            curl -sfL "${{ inputs.policies-source }}/naming.rego" -o /tmp/policies/naming.rego
+          fi
+
+      - name: Validate naming via OPA policies
+        run: |
+          POLICY_DIR="policies/"
+          if [ "${{ inputs.policies-source }}" != "local" ]; then
+            POLICY_DIR="/tmp/policies/"
+          fi
+          conftest test "${{ inputs.catalog-file }}" --policy "$POLICY_DIR" --namespace foral.naming
+
+      - name: Check YAML filenames are kebab-case
+        run: |
+          echo "Verificando naming de arquivos YAML..."
+          errors=0
+          for f in $(find . -name '*.yaml' -o -name '*.yml' | grep -v node_modules | grep -v .git); do
+            basename=$(basename "$f" | sed 's/\.\(yaml\|yml\)$//')
+            if ! echo "$basename" | grep -qE '^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$'; then
+              echo "❌ Nome inválido: $f (esperado: kebab-case)"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ "$errors" -gt 0 ]; then
+            echo "Encontrados $errors arquivos com naming inválido."
+            exit 1
+          fi
+          echo "✅ Todos os arquivos YAML seguem kebab-case."

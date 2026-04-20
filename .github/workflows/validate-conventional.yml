@@ -1,0 +1,46 @@
+# Foral Governance — Validação de Conventional Commits (Reusable Workflow)
+#
+# Pode ser chamado por QUALQUER repo via:
+#   uses: foral-project/governance/.github/workflows/validate-conventional.yml@v0.1.0
+#
+# Standard: Conventional Commits 1.0.0
+
+name: Validate Conventional Commits
+
+on:
+  workflow_call:
+
+jobs:
+  validate-commits:
+    name: Conventional Commits Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install commitlint
+        run: npm install -g @commitlint/cli @commitlint/config-conventional
+
+      - name: Create commitlint config
+        run: |
+          echo "module.exports = { extends: ['@commitlint/config-conventional'] };" \
+            > commitlint.config.js
+
+      - name: Validate commits
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          if [ "$COMMIT_COUNT" -eq 1 ]; then
+            echo "ℹ️  Primeiro commit detectado — validando apenas HEAD."
+            echo "$(git log -1 --format=%s)" | npx commitlint --verbose
+          elif [ "$COMMIT_COUNT" -le 10 ]; then
+            npx commitlint --from "$(git rev-list --max-parents=0 HEAD)" --to HEAD --verbose
+          else
+            npx commitlint --from HEAD~10 --to HEAD --verbose
+          fi

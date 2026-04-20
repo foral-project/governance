@@ -1,0 +1,26 @@
+# Manifesto self-describing do repositório de governance Foral.
+# Standard: Backstage catalog-info.yaml (CNCF Incubating)
+
+"@context": "https://foral-project.github.io/protocol/context/v1/catalog.jsonld"
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: foral-governance
+  description: "Instância de governança do protocolo Foral. Aplica enforcement via CI, OPA policies e federation registry."
+  annotations:
+    foral.dev/archetype: governance
+    github.com/project-slug: foral-project/governance
+  tags:
+    - governance
+    - federation
+    - opa
+    - ci
+  links:
+    - url: https://github.com/foral-project/governance
+      title: GitHub Repository
+spec:
+  type: service
+  lifecycle: experimental
+  owner: foral-project
+  dependsOn:
+    - component:foral-protocol

@@ -1,0 +1,28 @@
+# Foral Governance — CI (dogfooding)
+#
+# A org foral-project consome seus PRÓPRIOS reusable workflows.
+# Isso prova que o framework funciona (dogfooding).
+
+name: Foral CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  catalog:
+    uses: ./.github/workflows/validate-catalog.yml
+    with:
+      catalog-file: "catalog-info.yaml"
+      registry-file: "federation-registry.yaml"
+      policies-source: "local"
+
+  naming:
+    uses: ./.github/workflows/validate-naming.yml
+    with:
+      policies-source: "local"
+
+  commits:
+    uses: ./.github/workflows/validate-conventional.yml

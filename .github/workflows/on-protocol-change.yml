@@ -1,0 +1,31 @@
+# Governance — Re-validação triggada por mudanças no protocol
+#
+# Quando o protocol publica nova release (via repository_dispatch),
+# este workflow re-executa o federation health check para garantir
+# que todos os membros ainda são compliant com os novos schemas.
+#
+# Evento: com.foral.protocol.released (CloudEvents 1.0.3)
+
+name: Protocol Change — Re-validate Federation
+
+on:
+  repository_dispatch:
+    types: [protocol-release]
+
+jobs:
+  log-event:
+    name: Log CloudEvent
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log protocol release event
+        run: |
+          echo "=== CloudEvent Received ==="
+          echo "Type: ${{ github.event.client_payload.type }}"
+          echo "Source: ${{ github.event.client_payload.source }}"
+          echo "Tag: ${{ github.event.client_payload.tag }}"
+          echo "=========================="
+
+  re-validate:
+    name: Re-validate All Federation Members
+    needs: log-event
+    uses: ./.github/workflows/federation-check.yml
