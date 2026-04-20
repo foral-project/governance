@@ -1,0 +1,24 @@
+# Parameterized identity (never commit)
+.env
+
+# Terraform / OpenTofu state (infrastructure repos)
+*.tfstate
+*.tfstate.backup
+.terraform/
+.opentofu/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# AI dev tooling (não é artefato do projeto)
+.agents/
+.gemini/
+.claude/
+
+# Node (se tooling de validação for usado localmente)
+node_modules/

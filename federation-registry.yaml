@@ -1,0 +1,25 @@
+# Federation Registry — Membros federados do ecossistema Foral.
+# Standard: Backstage catalog locations (CNCF Incubating)
+# Schema: https://foral-project.github.io/protocol/schemas/v1/federation-registry.schema.yaml
+
+"@context": "https://foral-project.github.io/protocol/context/v1/registry.jsonld"
+apiVersion: foral.dev/v1
+kind: FederationRegistry
+metadata:
+  name: foral-production
+  description: "Registry de produção da federação Foral."
+spec:
+  protocol:
+    type: url
+    target: "https://github.com/foral-project/protocol"
+    version: "v0.1.0"
+  locations: []
+  # Membros futuros são adicionados via Pull Request:
+  #
+  # - type: url
+  #   target: "https://github.com/foral-project/infra-compute/blob/main/catalog-info.yaml"
+  #   version: "v1.0.0"
+  #
+  # - type: url
+  #   target: "https://github.com/foral-project/telegram-master/blob/main/catalog-info.yaml"
+  #   version: "v0.1.0"

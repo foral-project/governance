@@ -1,0 +1,99 @@
+# Foral Governance — Federation Health Check
+#
+# Execução agendada (diária): itera sobre todos os membros listados
+# em federation-registry.yaml e valida seus catalog-info.yaml.
+#
+# Requer: GitHub App `foral-validator` instalado na org com
+# permissão `contents: read` nos repos da federação.
+#
+# Standard: Backstage catalog locations (CNCF) + OPA/Conftest (CNCF)
+
+name: Federation Health Check
+
+on:
+  schedule:
+    # Executa diariamente às 06:00 UTC (03:00 BRT)
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  federation-check:
+    name: Validate All Federation Members
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout governance
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install tools
+        run: |
+          npm install -g ajv-cli ajv-formats
+          CONFTEST_VERSION="0.56.0"
+          curl -sfL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" \
+            | tar xz -C /usr/local/bin conftest
+
+      - name: Download protocol schemas
+        run: |
+          mkdir -p /tmp/schemas
+          curl -sfL https://foral-project.github.io/protocol/schemas/v1/catalog-info.schema.yaml \
+            -o /tmp/schemas/catalog-info.schema.yaml
+
+      - name: Validate federation members
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Federation Health Check ==="
+          echo ""
+          
+          # Parseia locations do federation-registry.yaml
+          # Requer yq (instalado por padrão no ubuntu-latest)
+          LOCATIONS=$(yq '.spec.locations[]?.target' federation-registry.yaml 2>/dev/null || echo "")
+          
+          if [ -z "$LOCATIONS" ]; then
+            echo "ℹ️  Nenhum membro registrado na federação (locations vazio)."
+            echo "   Isso é esperado para uma federação recém-criada."
+            exit 0
+          fi
+          
+          errors=0
+          total=0
+          
+          echo "$LOCATIONS" | while IFS= read -r target; do
+            total=$((total + 1))
+            echo "--- Validando: $target ---"
+            
+            # Baixa o catalog-info.yaml do membro
+            if curl -sfL "$target" -o /tmp/member-catalog.yaml; then
+              # Valida contra JSON Schema
+              if ajv validate -s /tmp/schemas/catalog-info.schema.yaml -d /tmp/member-catalog.yaml -c ajv-formats --spec=draft2020 2>&1; then
+                echo "  ✅ Schema válido"
+              else
+                echo "  ❌ Schema inválido"
+                errors=$((errors + 1))
+              fi
+              
+              # Valida contra OPA policies
+              if conftest test /tmp/member-catalog.yaml --policy policies/ 2>&1; then
+                echo "  ✅ Policies OK"
+              else
+                echo "  ❌ Policy violation"
+                errors=$((errors + 1))
+              fi
+            else
+              echo "  ❌ Não foi possível baixar: $target"
+              errors=$((errors + 1))
+            fi
+            
+            echo ""
+          done
+          
+          echo "=== Resultado: $total membros verificados, $errors erros ==="
+          
+          if [ "$errors" -gt 0 ]; then
+            exit 1
+          fi
