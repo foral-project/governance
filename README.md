@@ -1,29 +1,20 @@
-<div align="center">
-
-# ⚖️ Foral Governance
+# Foral Governance
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![CI](https://github.com/foral-project/governance/actions/workflows/ci.yml/badge.svg)](https://github.com/foral-project/governance/actions/workflows/ci.yml)
 [![OPA](https://img.shields.io/badge/OPA-CNCF%20Graduated-blueviolet.svg)](https://www.openpolicyagent.org/)
-[![Policies Live](https://img.shields.io/badge/Policies-Live%20↗-brightgreen)](https://foral-project.github.io/governance/policies/)
 
-Framework de governança federada instanciável. Publica **reusable workflows** e **OPA policies**
-que qualquer organização consome sem fork.
-
-[Guia de Adoção](ADOPTING.md) ·
-[Arquitetura](ARCHITECTURE.md) ·
-[OPA Policies](https://foral-project.github.io/governance/policies/) ·
-[ADRs](docs/adr/)
-
-</div>
+[Adopting Guide](ADOPTING.md) · [Architecture](ARCHITECTURE.md) · [OPA Policies](https://foral-project.github.io/governance/policies/) · [ADRs](docs/adr/)
 
 ---
 
-> **Não faça fork deste repositório.** Consuma via `uses:` ou baixe policies via HTTP.
+Publishes **reusable workflows** and **OPA policies** that any GitHub organization can consume without forking. This is the enforcement layer for the [Foral Protocol](https://github.com/foral-project/protocol).
 
-## Quick Start (5 minutos)
+> **Do not fork this repository.** Consume via `uses:` or download policies via HTTP.
 
-### 1. Adicione um manifesto ao seu repo
+## Quick Start
+
+### 1. Add a manifest to your repo
 
 ```yaml
 # catalog-info.yaml
@@ -40,7 +31,7 @@ spec:
   owner: my-org
 ```
 
-### 2. Adicione validação CI
+### 2. Add CI validation
 
 ```yaml
 # .github/workflows/foral.yml
@@ -55,25 +46,23 @@ jobs:
     uses: foral-project/governance/.github/workflows/validate-conventional.yml@main
 ```
 
-**Pronto.** O CI valida contra o [Foral Protocol](https://github.com/foral-project/protocol) automaticamente.
+Done. CI validates against the [Foral Protocol](https://github.com/foral-project/protocol) automatically.
 
-Para mais opções (CLI, template, customização): **[ADOPTING.md](ADOPTING.md)**
+For more options (CLI, template, customization): **[ADOPTING.md](ADOPTING.md)**
 
 ## Reusable Workflows
 
-Todos os workflows são parametrizáveis e versionados:
-
-| Workflow | Propósito |
+| Workflow | Purpose |
 |---|---|
 | [`validate-catalog.yml`](.github/workflows/validate-catalog.yml) | JSON Schema (IETF Draft 2020-12) + OPA/Conftest |
 | [`validate-naming.yml`](.github/workflows/validate-naming.yml) | RFC 1123 DNS Labels + kebab-case tags |
 | [`validate-conventional.yml`](.github/workflows/validate-conventional.yml) | Conventional Commits 1.0.0 |
 
 ```yaml
-# Consumo com versão pinada:
+# Pinned version:
 uses: foral-project/governance/.github/workflows/validate-catalog.yml@v0.1.0
 
-# Consumo com inputs customizados:
+# Custom inputs:
 uses: foral-project/governance/.github/workflows/validate-catalog.yml@main
 with:
   schema-url: "https://my-org.github.io/schemas/v1/catalog.schema.yaml"
@@ -82,51 +71,47 @@ with:
 
 ## OPA Policies
 
-Políticas de referência disponíveis via HTTP (GitHub Pages):
-
-| Policy | URL Live |
+| Policy | Live URL |
 |---|---|
 | Structural validation | [`catalog-info.rego`](https://foral-project.github.io/governance/policies/catalog-info.rego) |
 | Naming conventions | [`naming.rego`](https://foral-project.github.io/governance/policies/naming.rego) |
 
 ```bash
-# Download para uso local
+# Download
 curl -sfL https://foral-project.github.io/governance/policies/catalog-info.rego
 curl -sfL https://foral-project.github.io/governance/policies/naming.rego
 
-# Executar localmente
+# Run locally
 conftest test catalog-info.yaml --policy policies/
 ```
 
 ## Federation
 
-Este repo gerencia a federação da org `foral-project`:
-
-| Componente | Propósito |
+| Component | Purpose |
 |---|---|
-| [`federation-registry.yaml`](federation-registry.yaml) | Lista de membros federados |
-| [`federation-check.yml`](.github/workflows/federation-check.yml) | Health check diário (06:00 UTC) |
-| [`federation-admission.yml`](.github/workflows/federation-admission.yml) | Gate automático para PRs de admissão |
+| [`federation-registry.yaml`](federation-registry.yaml) | List of federated members |
+| [`federation-check.yml`](.github/workflows/federation-check.yml) | Daily health check (06:00 UTC) |
+| [`federation-admission.yml`](.github/workflows/federation-admission.yml) | Automatic gate for admission PRs |
 
-Novos membros entram via **Pull Request** editando o `federation-registry.yaml`.
+New members join via **Pull Request** editing `federation-registry.yaml`.
 
-## Documentação
+## Documentation
 
-| Doc | Conteúdo |
+| Doc | Content |
 |---|---|
-| [ADOPTING.md](ADOPTING.md) | Guia de adoção completo (CLI, template, manual) |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitetura detalhada (arc42) |
-| [docs/adr/](docs/adr/) | 9 Architecture Decision Records (Nygard) |
+| [ADOPTING.md](ADOPTING.md) | Full adoption guide (CLI, template, manual) |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Detailed architecture (arc42) |
+| [docs/adr/](docs/adr/) | Architecture Decision Records (Nygard) |
 
-## Ecossistema
+## Ecosystem
 
-| Repo | Papel |
+| Repo | Role |
 |---|---|
-| 📜 **[protocol](https://github.com/foral-project/protocol)** | Especificação, schemas, JSON-LD contexts |
-| ⚖️ **[governance](https://github.com/foral-project/governance)** | Reusable workflows, OPA policies (este repo) |
-| 🔧 **[cli](https://github.com/foral-project/cli)** | Validação e scaffold via terminal |
-| 📦 **[template](https://github.com/foral-project/template)** | GitHub template para novos repos |
+| [protocol](https://github.com/foral-project/protocol) | Specification, schemas, JSON-LD contexts |
+| [governance](https://github.com/foral-project/governance) | Reusable workflows, OPA policies (this repo) |
+| [cli](https://github.com/foral-project/cli) | Validation and scaffolding CLI |
+| [template](https://github.com/foral-project/template) | GitHub template for new projects |
 
-## Licença
+## License
 
 [Apache-2.0](LICENSE) — SPDX-License-Identifier: Apache-2.0
